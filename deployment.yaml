@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-example-deployment
+  labels:
+    app: webhook-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-example
+  template:
+    metadata:
+      labels:
+        app: webhook-example
+    spec:
+      nodeName: k8s-master
+      containers:
+        - name: webhook-example
+          image: webhook-example:20230517-144113
+          command: [ "/node" ]
+          ports:
+            - containerPort: 8443
+              name: webhook-api
+          args:
+            - -v=4
+            - -log_dir=log -alsologtostderr
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+            - name: kubeconfig
+              mountPath: /etc/
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: admission-registry-tls
+        - name: kubeconfig
+          hostPath:
+              path: /root/.kube/
+              type: Directory
+
